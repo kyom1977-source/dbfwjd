@@ -1,0 +1,235 @@
+{
+  "entities": {
+    "TestConnection": {
+      "title": "TestConnection",
+      "description": "Firestore real CRUD health check probe document",
+      "type": "object",
+      "properties": {
+        "test": {
+          "type": "boolean",
+          "description": "Probe boolean flag"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Probe timestamp"
+        },
+        "updated": {
+          "type": "boolean",
+          "description": "Updated flag for CRUD verify"
+        }
+      },
+      "required": ["test", "timestamp"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "Quiz game room managed by teacher",
+      "type": "object",
+      "properties": {
+        "pin": {
+          "type": "string",
+          "description": "4 to 6 digit room PIN code",
+          "maxLength": 10
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the quiz session",
+          "maxLength": 100
+        },
+        "gradeLevel": {
+          "type": "string",
+          "description": "Target grade level",
+          "maxLength": 20
+        },
+        "status": {
+          "type": "string",
+          "description": "State of game room",
+          "enum": ["waiting", "playing", "round_result", "finished"]
+        },
+        "currentQuestionIndex": {
+          "type": "number",
+          "description": "Current active question index (0-based)"
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Total number of questions in game"
+        },
+        "questionStartTime": {
+          "type": "number",
+          "description": "Timestamp ms when current question started"
+        },
+        "timeLimit": {
+          "type": "number",
+          "description": "Seconds allowed per question"
+        },
+        "teacherKey": {
+          "type": "string",
+          "description": "Teacher identifier or admin session key",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Room creation timestamp"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["pin", "title", "status", "currentQuestionIndex", "timeLimit", "createdAt"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "Quiz question item for english vocabulary",
+      "type": "object",
+      "properties": {
+        "qIndex": {
+          "type": "number",
+          "description": "Question sequence number"
+        },
+        "word": {
+          "type": "string",
+          "description": "Target English vocabulary word in uppercase",
+          "maxLength": 50
+        },
+        "meaning": {
+          "type": "string",
+          "description": "Korean translation and definition",
+          "maxLength": 200
+        },
+        "initialHint": {
+          "type": "string",
+          "description": "Initial letter hint (e.g. A _ _ _ _ E)",
+          "maxLength": 60
+        },
+        "koreanInitialHint": {
+          "type": "string",
+          "description": "Korean consonant initial hint (초성)",
+          "maxLength": 50
+        },
+        "alphabetBlocks": {
+          "type": "array",
+          "description": "List of alphabet letters for block selection",
+          "items": { "type": "string" }
+        },
+        "limitTime": {
+          "type": "number",
+          "description": "Seconds allowed for this question"
+        },
+        "exampleSentence": {
+          "type": "string",
+          "description": "Example English sentence demonstrating word usage",
+          "maxLength": 250
+        }
+      },
+      "required": ["qIndex", "word", "meaning", "initialHint", "alphabetBlocks", "limitTime"]
+    },
+    "Participant": {
+      "title": "Participant",
+      "description": "Student participant in the quiz room",
+      "type": "object",
+      "properties": {
+        "studentKey": {
+          "type": "string",
+          "description": "Unique key (e.g. 2026-3-12_민준)",
+          "maxLength": 80
+        },
+        "name": {
+          "type": "string",
+          "description": "Student name",
+          "maxLength": 40
+        },
+        "studentNum": {
+          "type": "string",
+          "description": "Student number or class code",
+          "maxLength": 30
+        },
+        "password": {
+          "type": "string",
+          "description": "Student rejoin password hash or token",
+          "maxLength": 64
+        },
+        "totalScore": {
+          "type": "number",
+          "description": "Accumulated total score"
+        },
+        "rank": {
+          "type": "number",
+          "description": "Calculated rank"
+        },
+        "correctCount": {
+          "type": "number",
+          "description": "Number of questions correctly answered"
+        },
+        "answeredCount": {
+          "type": "number",
+          "description": "Total questions answered"
+        },
+        "lastResponse": {
+          "type": "object",
+          "description": "Most recent answer submission for the current round"
+        },
+        "lastActive": {
+          "type": "number",
+          "description": "Heartbeat timestamp ms"
+        }
+      },
+      "required": ["studentKey", "name", "studentNum", "totalScore", "lastActive"]
+    },
+    "GameHistory": {
+      "title": "GameHistory",
+      "description": "Archived quiz session result and leaderboard",
+      "type": "object",
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "description": "PIN or room id",
+          "maxLength": 32
+        },
+        "roomTitle": {
+          "type": "string",
+          "description": "Quiz title",
+          "maxLength": 100
+        },
+        "completedAt": {
+          "type": "number",
+          "description": "Timestamp ms when game concluded"
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Total question count"
+        },
+        "participantCount": {
+          "type": "number",
+          "description": "Total participants"
+        },
+        "topRankers": {
+          "type": "array",
+          "description": "Top student participants and scores"
+        }
+      },
+      "required": ["roomId", "roomTitle", "completedAt", "totalQuestions", "participantCount"]
+    }
+  },
+  "firestore": {
+    "/test_connection/{testId}": {
+      "schema": { "$ref": "#/entities/TestConnection" },
+      "description": "Live CRUD connection verification probes"
+    },
+    "/rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/Room" },
+      "description": "Active quiz show rooms"
+    },
+    "/rooms/{roomId}/questions/{qIndex}": {
+      "schema": { "$ref": "#/entities/Question" },
+      "description": "Questions configured for the quiz room"
+    },
+    "/rooms/{roomId}/participants/{studentKey}": {
+      "schema": { "$ref": "#/entities/Participant" },
+      "description": "Enrolled student participants in the quiz room"
+    },
+    "/history/{historyId}": {
+      "schema": { "$ref": "#/entities/GameHistory" },
+      "description": "Concluded quiz records and hall of fame"
+    }
+  }
+}

@@ -1,0 +1,97 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidTestConnection(data) {
+      return data.test is bool &&
+             data.timestamp is number &&
+             data.keys().hasOnly(['test', 'timestamp', 'updated']);
+    }
+
+    function isValidRoom(data) {
+      return data.pin is string && data.pin.size() <= 10 &&
+             data.title is string && data.title.size() <= 100 &&
+             data.status in ['waiting', 'playing', 'round_result', 'finished'] &&
+             data.currentQuestionIndex is number &&
+             data.timeLimit is number &&
+             data.createdAt is number;
+    }
+
+    function isValidQuestion(data) {
+      return data.qIndex is number &&
+             data.word is string && data.word.size() <= 50 &&
+             data.meaning is string && data.meaning.size() <= 200 &&
+             data.initialHint is string && data.initialHint.size() <= 60 &&
+             data.alphabetBlocks is list && data.alphabetBlocks.size() <= 30 &&
+             data.limitTime is number;
+    }
+
+    function isValidParticipant(data) {
+      return data.studentKey is string && data.studentKey.size() <= 80 &&
+             data.name is string && data.name.size() <= 40 &&
+             data.studentNum is string && data.studentNum.size() <= 30 &&
+             data.totalScore is number && data.totalScore >= 0 &&
+             data.lastActive is number;
+    }
+
+    function isValidHistory(data) {
+      return data.roomId is string && data.roomId.size() <= 32 &&
+             data.roomTitle is string && data.roomTitle.size() <= 100 &&
+             data.completedAt is number &&
+             data.totalQuestions is number &&
+             data.participantCount is number;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Health probe for verifying real Firestore CRUD connection
+    match /test_connection/{testId} {
+      allow get, list: if isValidId(testId);
+      allow create: if isValidId(testId) && isValidTestConnection(incoming());
+      allow update: if isValidId(testId) && isValidTestConnection(incoming());
+      allow delete: if isValidId(testId);
+    }
+
+    // Quiz rooms
+    match /rooms/{roomId} {
+      allow get, list: if isValidId(roomId);
+      allow create: if isValidId(roomId) && isValidRoom(incoming());
+      allow update: if isValidId(roomId) && isValidRoom(incoming());
+      allow delete: if isValidId(roomId);
+
+      match /questions/{qIndex} {
+        allow get, list: if isValidId(qIndex);
+        allow create: if isValidId(qIndex) && isValidQuestion(incoming());
+        allow update: if isValidId(qIndex) && isValidQuestion(incoming());
+        allow delete: if isValidId(qIndex);
+      }
+
+      match /participants/{studentKey} {
+        allow get, list: if isValidId(studentKey);
+        allow create: if isValidId(studentKey) && isValidParticipant(incoming());
+        allow update: if isValidId(studentKey) && isValidParticipant(incoming());
+        allow delete: if isValidId(studentKey);
+      }
+    }
+
+    // Session histories and leaderboard
+    match /history/{historyId} {
+      allow get, list: if isValidId(historyId);
+      allow create: if isValidId(historyId) && isValidHistory(incoming());
+      allow update: if isValidId(historyId) && isValidHistory(incoming());
+      allow delete: if isValidId(historyId);
+    }
+  }
+}

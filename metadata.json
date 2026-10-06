@@ -1,0 +1,6 @@
+{
+  "name": "Real-time English Word Quiz Show",
+  "description": "중학생을 위한 실시간 영어 단어 퀴즈 쇼 (초성 & 알파벳 블록 조합, 실시간 Firestore 멀티플레이어, Gemini AI 단어 생성)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
