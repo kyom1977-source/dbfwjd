@@ -14,7 +14,7 @@ import {
   DocumentData,
   FirestoreError
 } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
+import firebaseConfig from './config/firebaseConfig';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
